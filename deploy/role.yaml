@@ -1,8 +1,15 @@
-kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
+  creationTimestamp: null
   name: apicurio-operator
 rules:
+- apiGroups:
+  - integreatly.org
+  resources:
+  - "*"
+  verbs:
+  - "*"
 - apiGroups:
   - ""
   resources:
@@ -13,6 +20,7 @@ rules:
   - events
   - configmaps
   - secrets
+  - serviceaccounts
   verbs:
   - "*"
 - apiGroups:
@@ -25,9 +33,23 @@ rules:
   verbs:
   - "*"
 - apiGroups:
-  - monitoring.coreos.com
+  - template.openshift.io
   resources:
-  - servicemonitors
-  verbs:
-  - "get"
-  - "create"
+  - processedtemplates
+  verbs: ["*"]
+- apiGroups:
+  - image.openshift.io
+  resources:
+  - imagestreams
+  verbs: ["*"]
+- apiGroups:
+  - apps.openshift.io
+  resources:
+  - deploymentconfigs
+  verbs: ["*"]
+- apiGroups:
+  - route.openshift.io
+  resources:
+  - routes
+  - routes/custom-host
+  verbs: ["*"]

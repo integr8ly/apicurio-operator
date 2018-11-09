@@ -1,3 +1,7 @@
+.idea
+deploy/test-pod.yaml
+tmp/
+
 # Temporary Build Files
 build/_output
 build/_test
