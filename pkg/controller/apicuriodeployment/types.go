@@ -5,9 +5,8 @@ import (
 	openshift "github.com/integr8ly/apicurio-operator/pkg/apis/integreatly/openshift/client"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"k8s.io/apimachinery/pkg/runtime"
+	"github.com/gobuffalo/packr"
 )
-
-const BaseTmplPath = "/etc/apicurio-operator/res"
 
 // ReconcileApiCurioDeployment reconciles a ApicurioDeployment object
 type ReconcileApiCurioDeployment struct {
@@ -17,6 +16,7 @@ type ReconcileApiCurioDeployment struct {
 	config *rest.Config
 	scheme *runtime.Scheme
 	tmpl *openshift.Template
+	box packr.Box
 }
 
 var routeParams = map[string]string{

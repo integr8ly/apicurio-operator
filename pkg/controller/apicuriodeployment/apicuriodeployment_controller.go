@@ -26,6 +26,9 @@ import (
 	"strings"
 	"github.com/openshift/api/image/v1"
 	v12 "github.com/openshift/api/apps/v1"
+
+	"github.com/gobuffalo/packr"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 // Add creates a new ApicurioDeployment Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -40,6 +43,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
 		config: mgr.GetConfig(),
+		box: packr.NewBox("../../../res"),
 	}
 }
 
@@ -136,8 +140,17 @@ func (r *ReconcileApiCurioDeployment) processTemplate(cr *integreatlyv1alpha1.Ap
 		return nil, fmt.Errorf("Spec.Template.Path property is not defined")
 	}
 
+	yamlData, err := r.box.Find(cr.Spec.Template)
+	if err  != nil {
+		return nil, err
+	}
 
-	res, err := openshift.LoadKubernetesResourceFromFile(BaseTmplPath + "/" + tmplPath)
+	jsonData, err := yaml.ToJSON(yamlData)
+	if err  != nil {
+		return nil, err
+	}
+
+	res, err := openshift.LoadKubernetesResource(jsonData)
 	if err != nil {
 		return nil, err
 	}

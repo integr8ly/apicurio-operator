@@ -62,3 +62,7 @@ required = [
   #branch = "master"
   version = "=v3.9.0"
   name = "github.com/openshift/client-go"
+
+[[constraint]]
+  name = "github.com/gobuffalo/packr"
+  version = "1.19.0"
