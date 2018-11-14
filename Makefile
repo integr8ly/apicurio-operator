@@ -10,7 +10,9 @@ OUT_STATIC_DIR = build/_output
 OUTPUT_BIN_NAME = ${IMAGE}
 TARGET_BIN = cmd/manager/main.go
 NS = apicurio-operator-test
-SA = apicurio-operator
+TEST_FOLDER = ./test/e2e
+KC_HOST =
+APPS_HOST =
 
 travis/setup:
 	@echo Installing golang dependencies
@@ -38,12 +40,20 @@ code/compile:
 test/unit:
 	go test -v -race -cover ./pkg/...
 
-test/e2e/cluster:
-	operator-sdk test cluster --namespace ${NS} --service-account ${SA} ${REG}/${ORG}/${IMAGE}:${TAG}
+test/e2e/local: image/build-with-tests image/push
+	operator-sdk test local ${TEST_FOLDER} --go-test-flags "-v"
+
+test/e2e/cluster: image/build-with-tests image/push
+	oc apply -f deploy/test-pod.yaml ${REG}/${ORG}/${IMAGE}:${TAG}oc delete pod/apicurio-operator-test -n {NS}
+
+test/e2e/prepare:
+	oc create secret generic apicurio-operator-test-env --from-literal="apicurio-apps-host=${APPS_HOST}" --from-literal="apicurio-kc-host=${KC_HOST}" -n ${NS}
+
+test/e2e/clear:
+	oc delete secret/apicurio-operator-test-env -n ${NS}
 
 res/copy:
-	mkdir -p ${OUT_STATIC_DIR}/res
-	cp -R ${RESOURCES_DIR}/* ${OUT_STATIC_DIR}/res
+	packr
 
 image/build: res/copy
 	operator-sdk build ${REG}/${ORG}/${IMAGE}:${TAG}
@@ -55,14 +65,14 @@ image/push:
 	docker push ${REG}/${ORG}/${IMAGE}:${TAG}
 
 cluster/prepare:
-	${KUBE_CMD} ${DEPLOY_DIR}/role.yaml
-	${KUBE_CMD} ${DEPLOY_DIR}/role_binding.yaml
-	${KUBE_CMD} ${DEPLOY_DIR}/service_account.yaml
-	${KUBE_CMD} ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_crd.yaml
-	${KUBE_CMD} ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_cr.yaml
+	${KUBE_CMD} ${DEPLOY_DIR}/role.yaml -n ${NS}
+	${KUBE_CMD} ${DEPLOY_DIR}/role_binding.yaml -n ${NS}
+	${KUBE_CMD} ${DEPLOY_DIR}/service_account.yaml -n ${NS}
+	${KUBE_CMD} ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_crd.yaml -n ${NS}
 
 cluster/deploy:
-	${KUBE_CMD} ${DEPLOY_DIR}/operator.yaml
+	${KUBE_CMD} ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_cr.yaml -n ${NS}
+	${KUBE_CMD} ${DEPLOY_DIR}/operator.yaml -n ${NS}
 
 cluster/clean:
-	oc delete all -l 'template=apicurio-studio'
+	${KUBE_CMD} delete all -l 'template=apicurio-studio'

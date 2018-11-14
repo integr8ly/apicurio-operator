@@ -62,8 +62,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// TODO(user): Modify this to be the types you create that are owned by the primary resource
-	// Watch for changes to secondary resource Pods and requeue the owner ApicurioDeployment
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &integreatlyv1alpha1.ApicurioDeployment{},
@@ -182,11 +180,11 @@ func (r *ReconcileApiCurioDeployment) processTemplate(cr *integreatlyv1alpha1.Ap
 	ext, err := r.tmpl.Process(tmpl, params, openshift.TemplateDefaultOpts)
 
 	return ext, err
-
 }
 
 func (r *ReconcileApiCurioDeployment) getRuntimeObjects(exts []runtime.RawExtension) ([]runtime.Object, error) {
 	objects := make([]runtime.Object, 0)
+
 	for _, ext := range exts {
 		res, err := openshift.LoadKubernetesResource(ext.Raw)
 		if err != nil {

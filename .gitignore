@@ -1,5 +1,4 @@
 .idea
-deploy/test-pod.yaml
 tmp/
 
 # Temporary Build Files
