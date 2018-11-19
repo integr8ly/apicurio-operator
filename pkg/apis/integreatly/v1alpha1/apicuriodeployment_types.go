@@ -8,6 +8,10 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // ApicurioDeploymentSpec defines the desired state of ApicurioDeployment
+const (
+	ApicurioFinalizer = "finalizer.org.integreatly.apicurio"
+)
+
 type ApicurioDeploymentSpec struct {
 	Version         string     `json:"version"`
 	AppDomain       string     `json:"app_domain"`

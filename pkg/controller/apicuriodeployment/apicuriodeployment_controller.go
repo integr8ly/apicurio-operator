@@ -91,6 +91,22 @@ func (r *ReconcileApiCurioDeployment) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{}, err
 	}
 
+	err = integreatlyv1alpha1.AddFinalizer(instance, integreatlyv1alpha1.ApicurioFinalizer)
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("failed to set finalizer in object: %v", err)
+	}
+	err = r.client.Update(context.TODO(), instance)
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("failed update in object: %v", err)
+	}
+
+	if instance.GetDeletionTimestamp() != nil {
+		err = r.deprovision(instance)
+		if err != nil {
+			return reconcile.Result{}, fmt.Errorf("Deprovisioning failed: %v", err)
+		}
+		return reconcile.Result{}, nil
+	}
 
 	err = r.bootstrap(request)
 	if err != nil {
@@ -262,6 +278,29 @@ func (r *ReconcileApiCurioDeployment) createObjects(objects []runtime.Object, ns
 			}
 			return fmt.Errorf("failed to create object: %v", err)
 		}
+	}
+
+	return nil
+}
+
+func (r *ReconcileApiCurioDeployment) deprovision(cr *integreatlyv1alpha1.ApicurioDeployment) error {
+	ok, err := integreatlyv1alpha1.HasFinalizer(cr, "foregroundDeletion")
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return nil
+	}
+
+	_, err = integreatlyv1alpha1.RemoveFinalizer(cr, integreatlyv1alpha1.ApicurioFinalizer)
+	if err != nil {
+		return err
+	}
+
+	err = r.client.Update(context.TODO(), cr)
+	if err != nil {
+		return fmt.Errorf("failed to update object: %v", err)
 	}
 
 	return nil
