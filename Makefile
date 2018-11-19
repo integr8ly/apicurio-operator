@@ -3,7 +3,6 @@ REG = quay.io
 ORG = integreatly
 IMAGE = apicurio-operator
 TAG = latest
-KUBE_CMD = oc apply -f
 RESOURCES_DIR = ./res
 DEPLOY_DIR = deploy
 OUT_STATIC_DIR = build/_output
@@ -11,6 +10,7 @@ OUTPUT_BIN_NAME = ${IMAGE}
 TARGET_BIN = cmd/manager/main.go
 NS = apicurio-operator-test
 TEST_FOLDER = ./test/e2e
+TEST_POD_NAME = apicurio-operator-test
 KC_HOST =
 APPS_HOST =
 
@@ -44,7 +44,8 @@ test/e2e/local: image/build-with-tests image/push
 	operator-sdk test local ${TEST_FOLDER} --go-test-flags "-v"
 
 test/e2e/cluster: image/build-with-tests image/push
-	oc apply -f deploy/test-pod.yaml ${REG}/${ORG}/${IMAGE}:${TAG}oc delete pod/apicurio-operator-test -n {NS}
+	oc apply -f deploy/test-pod.yaml -n ${NS}
+	${SHELL} ./scripts/stream-pod ${TEST_POD_NAME} ${NS}
 
 test/e2e/prepare:
 	oc create secret generic apicurio-operator-test-env --from-literal="apicurio-apps-host=${APPS_HOST}" --from-literal="apicurio-kc-host=${KC_HOST}" -n ${NS}
@@ -65,14 +66,14 @@ image/push:
 	docker push ${REG}/${ORG}/${IMAGE}:${TAG}
 
 cluster/prepare:
-	${KUBE_CMD} ${DEPLOY_DIR}/role.yaml -n ${NS}
-	${KUBE_CMD} ${DEPLOY_DIR}/role_binding.yaml -n ${NS}
-	${KUBE_CMD} ${DEPLOY_DIR}/service_account.yaml -n ${NS}
-	${KUBE_CMD} ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_crd.yaml -n ${NS}
+	oc apply -f ${DEPLOY_DIR}/role.yaml -n ${NS}
+	oc apply -f ${DEPLOY_DIR}/role_binding.yaml -n ${NS}
+	oc apply -f ${DEPLOY_DIR}/service_account.yaml -n ${NS}
+	oc apply -f ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_crd.yaml -n ${NS}
 
 cluster/deploy:
-	${KUBE_CMD} ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_cr.yaml -n ${NS}
-	${KUBE_CMD} ${DEPLOY_DIR}/operator.yaml -n ${NS}
+	oc apply -f ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_cr.yaml -n ${NS}
+	oc applt -f ${DEPLOY_DIR}/operator.yaml -n ${NS}
 
 cluster/clean:
-	${KUBE_CMD} delete all -l 'template=apicurio-studio'
+	oc delete all -l 'template=apicurio-studio'
