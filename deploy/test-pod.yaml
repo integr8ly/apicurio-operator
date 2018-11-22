@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: apicurio-operator-test
+spec:
+  #serviceAccount: apicurio-operator
+  serviceAccountName: apicurio-operator
+  restartPolicy: Never
+  containers:
+  - name: apicurio-operator-test
+    image: quay.io/integreatly/apicurio-operator:latest
+    imagePullPolicy: Always
+    command: ["/go-test.sh"]
+    env:
+      - name: TEST_NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+      - name: APICURIO_APPS_HOST
+        valueFrom:
+          secretKeyRef:
+            name: apicurio-operator-test-env
+            key: apicurio-apps-host
+      - name: APICURIO_KC_HOST
+        valueFrom:
+          secretKeyRef:
+            name: apicurio-operator-test-env
+            key: apicurio-kc-host
