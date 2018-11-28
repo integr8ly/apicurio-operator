@@ -18,6 +18,7 @@ travis/setup:
 	@echo Installing golang dependencies
 	@go get golang.org/x/sys/unix
 	@go get golang.org/x/crypto/ssh/terminal
+	@go get -u github.com/gobuffalo/packr/packr
 	@echo Installing dep
 	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 	@echo Installing errcheck
@@ -36,6 +37,9 @@ code/check:
 
 code/compile:
 	go build -o ${OUTPUT_BIN_NAME} ${TARGET_BIN}
+
+code/compile-for-docker:
+	go build -o ${OUT_STATIC_DIR}/bin/${IMAGE} ${TARGET_BIN}
 
 test/unit:
 	go test -v -race -cover ./pkg/...
@@ -59,11 +63,17 @@ res/copy:
 image/build: res/copy
 	operator-sdk build ${REG}/${ORG}/${IMAGE}:${TAG}
 
+image/docker-build: res/copy code/compile-for-docker
+	docker build -t ${REG}/${ORG}/${IMAGE}:${TAG} -f build/Dockerfile .
+
 image/build-with-tests: res/copy
 	operator-sdk build --enable-tests ${REG}/${ORG}/${IMAGE}:${TAG}
 
 image/push:
 	docker push ${REG}/${ORG}/${IMAGE}:${TAG}
+
+image/docker-build-and-push: image/docker-build image/push
+
 
 cluster/prepare:
 	oc apply -f ${DEPLOY_DIR}/role.yaml -n ${NS}
@@ -73,7 +83,7 @@ cluster/prepare:
 
 cluster/deploy:
 	oc apply -f ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_cr.yaml -n ${NS}
-	oc applt -f ${DEPLOY_DIR}/operator.yaml -n ${NS}
+	oc apply -f ${DEPLOY_DIR}/operator.yaml -n ${NS}
 
 cluster/clean:
 	oc delete all -l 'template=apicurio-studio'
