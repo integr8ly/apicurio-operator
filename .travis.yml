@@ -1,0 +1,29 @@
+language: go
+
+sudo: required
+
+go:
+  - 1.10.x
+
+env:
+  global:
+    - OPERATOR_NAME=apicurio-operator
+
+stages:
+  - test
+  - compile
+  - name: push
+    if: fork = false
+
+jobs:
+  include:
+    - stage: test
+      script:
+      - make travis/setup test/unit
+    - stage: compile
+      script:
+      - make travis/setup image/docker-build TAG=$(git rev-parse --short ${TRAVIS_COMMIT})
+    - stage: push
+      script:
+      - docker login --password "$QUAY_PASSWORD" --username "$QUAY_USERNAME" quay.io
+      - make travis/setup image/docker-build-and-push TAG=$(git rev-parse --short ${TRAVIS_COMMIT})
