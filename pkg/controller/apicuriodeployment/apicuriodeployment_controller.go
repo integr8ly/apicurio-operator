@@ -11,21 +11,23 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
+	"fmt"
+
+	openshift "github.com/integr8ly/apicurio-operator/pkg/apis/integreatly/openshift/client"
+	v1template "github.com/openshift/api/template/v1"
+	"github.com/sirupsen/logrus"
+	kuberr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"fmt"
-	openshift "github.com/integr8ly/apicurio-operator/pkg/apis/integreatly/openshift/client"
-	v1template "github.com/openshift/api/template/v1"
-	kuberr "k8s.io/apimachinery/pkg/api/errors"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
-	"github.com/openshift/api/image/v1"
+
 	v12 "github.com/openshift/api/apps/v1"
+	"github.com/openshift/api/image/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/gobuffalo/packr"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -43,7 +45,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
 		config: mgr.GetConfig(),
-		box: packr.NewBox("../../../res"),
+		box:    packr.NewBox("../../../res"),
 	}
 }
 
@@ -75,8 +77,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 var _ reconcile.Reconciler = &ReconcileApiCurioDeployment{}
 
-
-
 func (r *ReconcileApiCurioDeployment) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	log.Printf("Reconciling ApicurioDeployment %s/%s\n", request.Namespace, request.Name)
 
@@ -90,6 +90,8 @@ func (r *ReconcileApiCurioDeployment) Reconcile(request reconcile.Request) (reco
 
 		return reconcile.Result{}, err
 	}
+
+	instance.Status.Version = instance.Spec.Version
 
 	if instance.GetDeletionTimestamp() != nil {
 		err = r.deprovision(instance)
@@ -162,12 +164,12 @@ func (r *ReconcileApiCurioDeployment) processTemplate(cr *integreatlyv1alpha1.Ap
 	}
 
 	yamlData, err := r.box.Find(cr.Spec.Template)
-	if err  != nil {
+	if err != nil {
 		return nil, err
 	}
 
 	jsonData, err := yaml.ToJSON(yamlData)
-	if err  != nil {
+	if err != nil {
 		return nil, err
 	}
 
