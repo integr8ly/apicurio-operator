@@ -14,76 +14,96 @@ TEST_POD_NAME = apicurio-operator-test
 KC_HOST =
 APPS_HOST =
 
-travis/setup:
+.PHONY: setup/dep
+setup/dep:
 	@echo Installing golang dependencies
 	@go get golang.org/x/sys/unix
 	@go get golang.org/x/crypto/ssh/terminal
 	@go get -u github.com/gobuffalo/packr/packr
 	@echo Installing dep
 	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-	@echo Installing errcheck
-	@go get github.com/kisielk/errcheck
-	@echo setup complete run make build deploy to build and deploy the operator to a local cluster
-	dep ensure
+	@echo setup complete
 
-code/k8s:
-	operator-sdk generate k8s
+.PHONY: setup/travis
+setup/travis:
+	@echo Installing Operator SDK
+	@curl -Lo operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v0.1.0/operator-sdk-v0.1.0-x86_64-linux-gnu && chmod +x operator-sdk && sudo mv operator-sdk /usr/local/bin/
 
-code/fix:
-	gofmt -w `find . -type f -name '*.go' -not -path "./vendor/*"`
+.PHONY: code/run
+code/run:
+	@operator-sdk up local --namespace=${NAMESPACE}
 
-code/check:
-	diff -u <(echo -n) <(gofmt -d `find . -type f -name '*.go' -not -path "./vendor/*"`)
-
+.PHONY: code/compile
 code/compile:
-	go build -o ${OUTPUT_BIN_NAME} ${TARGET_BIN}
+	@packr
+	@go build -o ${OUTPUT_BIN_NAME} ${TARGET_BIN}
+	@packr clean
 
-code/compile-for-docker:
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${OUT_STATIC_DIR}/bin/${IMAGE} ${TARGET_BIN}
+.PHONY: code/gen
+code/gen:
+	@operator-sdk generate k8s
 
-test/unit:
-	go test -v -race -cover ./pkg/...
+.PHONY: code/check
+code/check:
+	@diff -u <(echo -n) <(gofmt -d `find . -type f -name '*.go' -not -path "./vendor/*"`)
 
-test/e2e/local: image/build-with-tests image/push
-	operator-sdk test local ${TEST_FOLDER} --go-test-flags "-v"
+.PHONY: code/fix
+code/fix:
+	@gofmt -w `find . -type f -name '*.go' -not -path "./vendor/*"`
 
-test/e2e/cluster: image/build-with-tests image/push
-	oc apply -f deploy/test-pod.yaml -n ${NS}
-	${SHELL} ./scripts/stream-pod ${TEST_POD_NAME} ${NS}
+.PHONY: image/build
+image/build: code/compile
+	@operator-sdk build ${REG}/${ORG}/${IMAGE}:${TAG}
 
-test/e2e/prepare:
-	oc create secret generic apicurio-operator-test-env --from-literal="apicurio-apps-host=${APPS_HOST}" --from-literal="apicurio-kc-host=${KC_HOST}" -n ${NS}
-
-test/e2e/clear:
-	oc delete secret/apicurio-operator-test-env -n ${NS}
-
-res/copy:
-	packr
-
-image/build: res/copy
-	operator-sdk build ${REG}/${ORG}/${IMAGE}:${TAG}
-
-image/docker-build: res/copy code/compile-for-docker
-	docker build -t ${REG}/${ORG}/${IMAGE}:${TAG} -f build/Dockerfile .
-
-image/build-with-tests: res/copy
-	operator-sdk build --enable-tests ${REG}/${ORG}/${IMAGE}:${TAG}
-
+.PHONY: image/push
 image/push:
 	docker push ${REG}/${ORG}/${IMAGE}:${TAG}
 
-image/docker-build-and-push: image/docker-build image/push
+.PHONY: image/build/push
+image/build/push: image/build
+	@docker push ${REG}/${ORG}/${IMAGE}:${TAG}
+
+.PHONY: test/unit
+test/unit:
+	@go test -v -race -cover ./pkg/...
 
 
+.PHONY: test/e2e/prepare
+test/e2e/prepare:
+	oc create secret generic apicurio-operator-test-env --from-literal="apicurio-apps-host=${APPS_HOST}" --from-literal="apicurio-kc-host=${KC_HOST}" -n ${NS}
+
+.PHONY: test/e2e
+test/e2e: image/build/test image/push
+	operator-sdk test local ${TEST_FOLDER} --go-test-flags "-v"
+
+.PHONY: test/e2e/clear
+test/e2e/clear:
+	oc delete secret/apicurio-operator-test-env -n ${NS}
+
+.PHONY: test/e2e/cluster
+test/e2e/cluster: image/build/test image/push
+	oc apply -f deploy/test-pod.yaml -n ${NS}
+	${SHELL} ./scripts/stream-pod ${TEST_POD_NAME} ${NS}
+
+.PHONY: image/build/test
+image/build/test:
+	@packr
+	operator-sdk build --enable-tests ${REG}/${ORG}/${IMAGE}:${TAG}
+
+.PHONY: cluster/prepare
 cluster/prepare:
+	oc create namespace apicurio-operator-test
 	oc apply -f ${DEPLOY_DIR}/role.yaml -n ${NS}
 	oc apply -f ${DEPLOY_DIR}/role_binding.yaml -n ${NS}
 	oc apply -f ${DEPLOY_DIR}/service_account.yaml -n ${NS}
 	oc apply -f ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_crd.yaml -n ${NS}
 
+.PHONY: cluster/deploy
 cluster/deploy:
 	oc apply -f ${DEPLOY_DIR}/crds/integreatly_v1alpha1_apicuriodeployment_cr.yaml -n ${NS}
 	oc apply -f ${DEPLOY_DIR}/operator.yaml -n ${NS}
 
+.PHONY: cluster/clean
 cluster/clean:
+	oc delete namespace apicurio-operator-test
 	oc delete all -l 'template=apicurio-studio'
