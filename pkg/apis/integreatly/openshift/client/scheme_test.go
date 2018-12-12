@@ -1,17 +1,17 @@
 package client
 
 import (
-	"testing"
-	"k8s.io/apimachinery/pkg/runtime"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
+	"testing"
 )
 
 func TestWatchNegotiatedSerializer_SupportedMediaTypes(t *testing.T) {
-	cases := []struct{
-		Name string
-		MediaTypes func () []runtime.SerializerInfo
-		Get func(s []runtime.SerializerInfo) runtime.SerializerInfo
-		Validate func(m runtime.SerializerInfo) error
+	cases := []struct {
+		Name        string
+		MediaTypes  func() []runtime.SerializerInfo
+		Get         func(s []runtime.SerializerInfo) runtime.SerializerInfo
+		Validate    func(m runtime.SerializerInfo) error
 		ExpectError bool
 	}{
 		{
@@ -24,7 +24,7 @@ func TestWatchNegotiatedSerializer_SupportedMediaTypes(t *testing.T) {
 				return s[0]
 			},
 			Validate: func(m runtime.SerializerInfo) error {
-				if 	m.MediaType != "application/json" {
+				if m.MediaType != "application/json" {
 					return fmt.Errorf("Invalid json media type: %s", m.MediaType)
 				}
 

@@ -4,14 +4,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"io/ioutil"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	"strings"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	cgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	cgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"strings"
 
 	apps "github.com/openshift/api/apps/v1"
 	authorization "github.com/openshift/api/authorization/v1"
@@ -40,7 +40,6 @@ func init() {
 	image.AddToScheme(scheme)
 	route.AddToScheme(scheme)
 	template.AddToScheme(scheme)
-
 
 	//legacy openshift types
 	apps.AddToSchemeInCoreGroup(scheme)

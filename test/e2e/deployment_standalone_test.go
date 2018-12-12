@@ -1,14 +1,14 @@
 package e2e
 
 import (
-	"testing"
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/integr8ly/apicurio-operator/pkg/apis/integreatly/v1alpha1"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
+	"testing"
 )
 
-func TestApicurioDeployment (t *testing.T) {
+func TestApicurioDeployment(t *testing.T) {
 	var err error
 	t.Parallel()
 

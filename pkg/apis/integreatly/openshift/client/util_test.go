@@ -1,9 +1,9 @@
 package client
 
 import (
+	_ "github.com/integr8ly/apicurio-operator/pkg/apis"
 	"io/ioutil"
 	"testing"
-	_ "github.com/integr8ly/apicurio-operator/pkg/apis"
 )
 
 func TestLoadKubernetesResourceFromFile(t *testing.T) {

@@ -1,11 +1,11 @@
 package e2e
 
 import (
-	"testing"
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/integr8ly/apicurio-operator/pkg/apis/integreatly/v1alpha1"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
+	"testing"
 )
 
 func TestApicurioDeploymentExternalKc(t *testing.T) {
@@ -46,13 +46,13 @@ func buildAuthCr(ctx *framework.TestCtx) *v1alpha1.ApicurioDeployment {
 			Namespace: ns,
 		},
 		Spec: v1alpha1.ApicurioDeploymentSpec{
-			Template:  "apicurio-template.yml",
-			Version:   "0.2.18.Final",
-			AppDomain: os.Getenv("APICURIO_APPS_HOST"),
+			Template:        "apicurio-template.yml",
+			Version:         "0.2.18.Final",
+			AppDomain:       os.Getenv("APICURIO_APPS_HOST"),
 			ExternalAuthUrl: os.Getenv("APICURIO_KC_HOST"),
-			AuthRealm: "openshift",
-			JvmHeap:   [2]string{"768m", "2048m"},
-			MemLimit:  [2]string{"800Mi", "4Gi"},
+			AuthRealm:       "openshift",
+			JvmHeap:         [2]string{"768m", "2048m"},
+			MemLimit:        [2]string{"800Mi", "4Gi"},
 		},
 	}
 }
