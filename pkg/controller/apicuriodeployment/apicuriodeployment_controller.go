@@ -91,21 +91,28 @@ func (r *ReconcileApiCurioDeployment) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{}, err
 	}
 
-	err = integreatlyv1alpha1.AddFinalizer(instance, integreatlyv1alpha1.ApicurioFinalizer)
-	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("failed to set finalizer in object: %v", err)
-	}
-	err = r.client.Update(context.TODO(), instance)
-	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("failed update in object: %v", err)
-	}
-
 	if instance.GetDeletionTimestamp() != nil {
 		err = r.deprovision(instance)
 		if err != nil {
-			return reconcile.Result{}, fmt.Errorf("Deprovisioning failed: %v", err)
+			return reconcile.Result{}, fmt.Errorf("deprovisioning failed: %v", err)
 		}
 		return reconcile.Result{}, nil
+	}
+
+	ok, err := integreatlyv1alpha1.HasFinalizer(instance, integreatlyv1alpha1.ApicurioFinalizer)
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("could not read CR finalizer: %v", err)
+	}
+
+	if !ok {
+		err = integreatlyv1alpha1.AddFinalizer(instance, integreatlyv1alpha1.ApicurioFinalizer)
+		if err != nil {
+			return reconcile.Result{}, fmt.Errorf("failed to set finalizer in object: %v", err)
+		}
+		err = r.client.Update(context.TODO(), instance)
+		if err != nil {
+			return reconcile.Result{}, fmt.Errorf("failed update in object: %v", err)
+		}
 	}
 
 	err = r.bootstrap(request)
