@@ -1,27 +1,27 @@
 package e2e
 
 import (
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
-	"testing"
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/integr8ly/apicurio-operator/pkg/apis/integreatly/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"time"
-	"k8s.io/apimachinery/pkg/util/wait"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/api/core/v1"
-	appsv1 "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"
-	"k8s.io/client-go/rest"
 	goctx "context"
+	"github.com/integr8ly/apicurio-operator/pkg/apis/integreatly/v1alpha1"
+	appsv1 "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"testing"
+	"time"
 )
 
 func prepare(t *testing.T) *framework.TestCtx {
 	ctx := framework.NewTestCtx(t)
 	opt := &framework.CleanupOptions{
-		TestContext:ctx,
+		TestContext:   ctx,
 		RetryInterval: retryInterval,
-		Timeout: timeout,
+		Timeout:       timeout,
 	}
 
 	err := ctx.InitializeClusterResources(opt)
@@ -45,7 +45,7 @@ func prepare(t *testing.T) *framework.TestCtx {
 }
 
 func register() error {
-	stuffList := &v1alpha1.ApicurioDeploymentList {
+	stuffList := &v1alpha1.ApicurioDeploymentList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ApicurioDeployment",
 			APIVersion: "integreatly.org/apicuriodeployment",
@@ -106,11 +106,10 @@ func validateDeployment(f *framework.Framework, ctx *framework.TestCtx, cr *v1al
 	return nil
 }
 
-
 func cleanupOpts(ctx *framework.TestCtx) *framework.CleanupOptions {
 	return &framework.CleanupOptions{
-		TestContext: ctx,
-		Timeout: timeout,
+		TestContext:   ctx,
+		Timeout:       timeout,
 		RetryInterval: retryInterval,
 	}
 }
@@ -126,7 +125,7 @@ func waitForPod(t *testing.T, kubeclient kubernetes.Interface, namespace, name s
 		}
 
 		if pod.Status.Phase == v1.PodRunning {
-			return  true, nil
+			return true, nil
 		}
 
 		return false, nil
@@ -135,7 +134,7 @@ func waitForPod(t *testing.T, kubeclient kubernetes.Interface, namespace, name s
 	return err
 }
 
-func waitForDC(config *rest.Config,  namespace, name string, retryInterval, timeout time.Duration) error {
+func waitForDC(config *rest.Config, namespace, name string, retryInterval, timeout time.Duration) error {
 	kubeApps, _ := appsv1.NewForConfig(config)
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		dc, err := kubeApps.DeploymentConfigs(namespace).Get(name, metav1.GetOptions{})
@@ -147,7 +146,7 @@ func waitForDC(config *rest.Config,  namespace, name string, retryInterval, time
 		}
 
 		if dc.Status.Replicas == dc.Status.ReadyReplicas {
-			return  true, nil
+			return true, nil
 		}
 
 		return false, nil

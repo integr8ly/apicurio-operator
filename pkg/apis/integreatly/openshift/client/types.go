@@ -6,7 +6,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var YamlExtensions = [2]string {
+var YamlExtensions = [2]string{
 	"yml",
 	"yaml",
 }

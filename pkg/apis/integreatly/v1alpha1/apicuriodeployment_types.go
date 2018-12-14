@@ -13,13 +13,13 @@ const (
 )
 
 type ApicurioDeploymentSpec struct {
-	Version         string     `json:"version"`
-	AppDomain       string     `json:"app_domain"`
-	Template        string     `json:"template"`
-	ExternalAuthUrl string     `json:"external_auth_url"`
-	AuthRealm       string     `json:"auth_realm"`
-	JvmHeap         [2]string  `json:"jvm_heap"`
-	MemLimit        [2]string  `json:"mem_limit"`
+	Version         string    `json:"version"`
+	AppDomain       string    `json:"app_domain"`
+	Template        string    `json:"template"`
+	ExternalAuthUrl string    `json:"external_auth_url"`
+	AuthRealm       string    `json:"auth_realm"`
+	JvmHeap         [2]string `json:"jvm_heap"`
+	MemLimit        [2]string `json:"mem_limit"`
 }
 
 // ApicurioDeploymentStatus defines the observed state of ApicurioDeployment
@@ -43,8 +43,8 @@ type ApicurioDeployment struct {
 
 // ApicurioDeploymentList contains a list of ApicurioDeployment
 type ApicurioDeploymentList struct {
-	metav1.TypeMeta                      `json:",inline"`
-	metav1.ListMeta                      `json:"metadata,omitempty"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ApicurioDeployment `json:"items"`
 }
 
