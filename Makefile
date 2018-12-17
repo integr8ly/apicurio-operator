@@ -53,7 +53,9 @@ code/fix:
 
 .PHONY: image/build
 image/build: code/compile
+	@packr
 	@operator-sdk build ${REG}/${ORG}/${IMAGE}:${TAG}
+	@packr clean
 
 .PHONY: image/push
 image/push:
@@ -89,6 +91,7 @@ test/e2e/cluster: image/build/test image/push
 image/build/test:
 	@packr
 	operator-sdk build --enable-tests ${REG}/${ORG}/${IMAGE}:${TAG}
+	@packr clean
 
 .PHONY: cluster/prepare
 cluster/prepare:
